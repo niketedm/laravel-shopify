@@ -1,58 +1,144 @@
-<p align="center"><img src="https://laravel.com/assets/img/components/logo-laravel.svg"></p>
+# Laravel Shopify Simple CRUD App
+Laravel Shopify App for Product, Customer, and Order CRUD
+This app uses PHP SDK Shopify API https://github.com/phpclassic/php-shopify
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+## Requirements
+Composer, PHP and Mysql(MariaDB) Server.
 
-## About Laravel
+PHP and Dependencies for Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as:
+- PHP >= 7.1.3
+- OpenSSL PHP Extension
+- PDO PHP Extension
+- Mbstring PHP Extension
+- Tokenizer PHP Extension
+- XML PHP Extension
+- Ctype PHP Extension
+- JSON PHP Extension
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Shopify Account
+1) Register as developer Shopify partner - https://developers.shopify.com/
+2) Set up Shopify private app - https://help.shopify.com/api/getting-started/authentication/private-authentication
 
-Laravel is accessible, yet powerful, providing tools needed for large, robust applications.
+## Installation
+1) Create environment configuration file
 
-## Learning Laravel
+Copy that example .env file with this command
+```shell
+cp .env.exampe .env
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of any modern web application framework, making it a breeze to get started learning the framework.
+Edit that new .env file
+```shell
+vi .env
+```
 
-If you're not in the mood to read, [Laracasts](https://laracasts.com) contains over 1100 video tutorials on a range of topics including Laravel, modern PHP, unit testing, JavaScript, and more. Boost the skill level of yourself and your entire team by digging into our comprehensive video library.
+Update these config variables
+```shell
+APP_URL=http://localhost
 
-## Laravel Sponsors
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=homestead
+DB_USERNAME=homestead
+DB_PASSWORD=secret
+```
 
-We would like to extend our thanks to the following sponsors for helping fund on-going Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell):
+Add this code right below DB config
+```shell
+SHOPIFY_URL = your-store@myshopify.com
+SHOPIFY_API_KEY = your-store-api-key
+SHOPIFY_PASSWORD = your-store-pass
+SHOPIFY_SHARED_SECRET = your-store-share-key
+SHOPIFY_REDIRECT_URI = redirect_url
+SHOPIFY_PARTNER_API_KEY = partner-app-api-key
+SHOPIFY_PARTNER_API_SECRET = partner-app-secret-key
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Pulse Storm](http://www.pulsestorm.net/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
+2) Generate application key
 
-## Contributing
+Run artisan command
+```shell
+php artisan key:generate
+```
+It generates a random key which is automatically added to .env file APP_KEY variable.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3) Migrating DB Schema
 
-## Security Vulnerabilities
+```shell
+php artisan migrate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Setup Host Server
 
-## License
+So you don't have to run 'PHP artisan serve' all the time 
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+#### Windows (Apache i.e. xampp)
+1) Open a notedpad via right-click and "Run as Administrator"
+3) From within that notepad, CTRL+o to open a file
+4) Locate "hosts" file in C:\Windows\System32\drivers\etc
+5) In File Extension select "All Files"
+6) There you'll see "hosts" file. Choose to open it
+
+Add your server url
+```php
+127.0.0.1 local.laravel.shopify
+```
+
+7) locate and open your Apache vhost config file in C:\xampp\apache\conf\extra\httpd-vhosts.conf (Refer to your Apache config to locate the vhost file)
+
+Add this server url to listen to port :80
+```php
+<VirtualHost local.laravel.shopify:80>
+    DocumentRoot "you-app-folder/public"
+</VirtualHost>
+```
+
+Now Restart your Apache
+
+
+#### Nginx
+1) Locate your server block and apply this config setup
+
+```php
+	server {
+    listen 80;
+    server_name local.laravel.shopify;
+    root /you-app-folder/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.html index.htm index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/php/php7.1-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+```
+
+Then RESTART your nginx server
+
+
+### Happy Coding!
+

@@ -38,6 +38,7 @@ Route::get('/customer-delete/{id}', 'CustomerController@delete');
 
 // Orders
 Route::get('/orders', 'OrderController@index')->name('orders');
+Route::get('/fulfilled', 'OrderController@fulfilled')->name('fulfilled');
 Route::get('/order-new', 'OrderController@create');
 Route::get('/order-view/{id}', 'OrderController@view')->name('orderview');
 Route::get('/order-edit/{id}', 'OrderController@edit');

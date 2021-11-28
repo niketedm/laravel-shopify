@@ -36,13 +36,13 @@
                           <td>{{ date("l, F t, Y", strtotime($order['created_at'])) }}</td>
                           <td>{{ ucfirst($order['customer']['first_name']) }} {{ ucfirst($order['customer']['last_name']) }}</td>
                           <td>{{ $order['financial_status'] }}</td>
-                          <td>{{ $order['fulfillment_status'] == '' ? 'Unfulfilled' : $order['financial_status'] }}</td>
+                          <td>{{ $order['fulfillment_status'] == '' ? 'Fulfilled' : $order['fulfillment_status'] }}</td>
                           <td>${{ $order['total_price'] }}</td>
                           <td>
                             <a href="{{ url('/') }}/order-view/{{ $order['id'] }}" class="badge badge-primary">View</a>
                             <a href="{{ url('/') }}/order-edit/{{ $order['id'] }}" class="badge badge-primary">Edit</a>
                             <a href="{{ url('/') }}/order-delete/{{ $order['id'] }}" class="badge badge-primary" onClick="return confirm('Delete Order?');">Delete</a>
-                            <a href="{{ url('/') }}/crear-envio/{{ $order['id'] }}" class="badge badge-primary">Crear envio</a>
+                            <a href="{{ url('/') }}/imprimir-etiqueta/{{ $order['id'] }}" class="badge badge-primary">Imprimir etiqueta</a>
                           </td>
                         </tr>
                         

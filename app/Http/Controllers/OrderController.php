@@ -43,8 +43,8 @@ class OrderController extends Controller
 
         $shopify = new PHPShopify\ShopifySDK($this->config);
         $filters = array(
-            'status' => 'any', // open / closed / cancelled / any (Default: open)
-            'limit' => '40'
+            //'status' => 'any', // open / closed / cancelled / any (Default: open)
+            'limit' => '50'
         );
         $orders = $shopify->Order->get($filters);
 
@@ -53,6 +53,24 @@ class OrderController extends Controller
         //echo '</pre>';
 
         return view('order.index', array('orders'=>$orders) );
+    }
+    public function fulfilled()
+    {        
+        PHPShopify\ShopifySDK::config($this->config);
+        PHPShopify\AuthHelper::createAuthRequest($this->scopes, $this->redirectUrl, null, null, true);
+
+        $shopify = new PHPShopify\ShopifySDK($this->config);
+        $filters = array(
+            'status' => 'any', // open / closed / cancelled / any (Default: open)
+            'limit' => '100'
+        );
+        $orders = $shopify->Order->get($filters);
+
+        //  echo '<pre>';
+        //  var_dump($orders);
+        //  echo '</pre>';
+
+        return view('order.fulfilled', array('orders'=>$orders) );
     }
 
     public function view(Request $request) {
@@ -222,7 +240,7 @@ class OrderController extends Controller
     {
        //1- obtener los datos del pedido
        $orderId = $request->route('id');
-
+    
         PHPShopify\ShopifySDK::config($this->config);
         PHPShopify\AuthHelper::createAuthRequest($this->scopes, $this->redirectUrl, null, null, true);
 
@@ -230,8 +248,25 @@ class OrderController extends Controller
 
         $customers = $shopify->Customer->get();
         $order = $shopify->Order($orderId)->get();
-        //var_dump($order);
-        //Create the client object
+
+        // cliente
+        $telefono = str_replace(' ', '', $order['shipping_address']['phone']);
+        $telefono = substr($telefono, 0, 9);
+        $correo = $order['email'];
+        $nombrecompleto = $order['shipping_address']['first_name'] . ' ' . $order['shipping_address']['last_name'];
+        $calle = $order['shipping_address']['address1'];
+        $departamento = strtoupper($order['shipping_address']['address2']);
+        $localidad = $order['shipping_address']['city'];
+        $cedula = $order['shipping_address']['company'];
+        //numero
+        $callenumero = array_filter(preg_split("/\D+/", $calle));
+        $numerocasa = reset($callenumero);
+        
+        // pedido
+        $peso = $order['total_weight'];
+        $referencia = 'Pedido ' . $order['order_number'];
+        
+        //Llamada a coreo uruguay
         $wsdl = "http://ahivatest.correo.com.uy/web/CargaMasivaServicev4?wsdl";
         $client = new SoapClient($wsdl, array(  'soap_version' => SOAP_1_1,'trace' => true,)); 
         $namespace = 'http://schemas.xmlsoap.org/soap/envelope/'; 
@@ -244,25 +279,25 @@ class OrderController extends Controller
                     'valor' => 'si'
             ),
             "arg5" => array(
-                'cedulaDestinatario' => '', 
+                'cedulaDestinatario' => $cedula, 
                 'datosdevolucion' => array(
-                    'calle' => '18 DE JULIO',
-                    'departamento' => 'MONTEVIDEO',
-                    'localidad' => 'MONTEVIDEO',
-                    'nroPuerta' => '1234'
+                    'calle' => 'Jose Ignacio',
+                    'departamento' => 'La Juanita',
+                    'localidad' => 'Maldonado',
+                    'nroPuerta' => '582'
                 ),
                 'destinatario' => array(
-                    'celular' => '099999999',
-                    'mail' => 'jhondoe@correo.com.uy',
-                    'nombre' => 'John Doe'
+                    'celular' => $telefono,
+                    'mail' => $correo,
+                    'nombre' => $nombrecompleto
                 ),
                 'lugarEntrega' => array(
-                    'calle' => 'BUENOS AIRES',
-                    'departamento' => 'MONTEVIDEO',
-                    'localidad' => 'MONTEVIDEO',
+                    'calle' => $calle,
+                    'departamento' => $departamento,
+                    'localidad' => $localidad,
                     'manzana' => '',
                     'nroApto' => '',
-                    'nroPuerta' => '999',
+                    'nroPuerta' => $numerocasa,
                     'observacionesDireccion' => '',
                     'oficinaCorreo' => '',
                     'solar' => ''
@@ -271,22 +306,17 @@ class OrderController extends Controller
                     'almacenamiento' => '10',
                     'empaque' => '0',
                     'motivodevolucion' => '',
-                    'peso' => '5',
-                    'referencia' => 'Caja de lapices',
+                    'peso' => $peso,
+                    'referencia' => $referencia,
                     'responsableServEntrega' => 'DESTINATARIO'
                 ),
                 'soloDestinatario' => '0'
             ),
 
         );
-        
+        //echo '<pre>';
+        //die(var_dump($params));
         $response = $client->__soapCall('cargaMasiva'  , array($params));
-        //echo base64_decode($response);
-        
-        //$data = $response->return->envios['codigostrazabilidad'];
-        //echo $data;
-
-        //$phpresponse->ConfirmarCompraResult->NumeroAndreani
         
         $descripcionRespuesta = $response->return->descripcionRespuesta;
         $codigoRespuesta = $response->return->codigoRespuesta;

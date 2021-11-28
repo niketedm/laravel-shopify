@@ -44,12 +44,13 @@
                     <ul class="nav navbar-nav navbar-right">
                         <!-- Authentication Links -->
                         @guest
-                            <li><a href="{{ route('login') }}">Login</a></li>
-                            <li><a href="{{ route('register') }}">Register</a></li>
+                            <li><a href="{{ route('login') }}">Ingresar</a></li>
+                            <li><a href="{{ route('register') }}">Registrar</a></li>
                         @else
-                            <li><a href="{{ route('home') }}">Products</a></li>
-                            <li><a href="{{ route('customers') }}">Customers</a></li>
-                            <li><a href="{{ route('orders') }}">Orders</a></li>
+                            <li><a href="{{ route('home') }}">Productos</a></li>
+                            <li><a href="{{ route('customers') }}">Clientes</a></li>
+                            <li><a href="{{ route('orders') }}">Ordenes</a></li>
+                            <li><a href="{{ route('fulfilled') }}">Envios</a></li>
                             <li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
                                     {{ Auth::user()->name }} <span class="caret"></span>
