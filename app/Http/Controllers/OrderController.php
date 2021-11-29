@@ -178,7 +178,7 @@ class OrderController extends Controller
 
         $customers = $shopify->Customer->get();
         $order = $shopify->Order($orderId)->get();
-        
+        //die(var_dump($order));
         return view('order.edit', array('order'=>$order, 'customers'=>$customers) );
 
     }
@@ -255,15 +255,15 @@ class OrderController extends Controller
         $correo = $order['email'];
         $nombrecompleto = $order['shipping_address']['first_name'] . ' ' . $order['shipping_address']['last_name'];
         $calle = $order['shipping_address']['address1'];
-        $departamento = strtoupper($order['shipping_address']['address2']);
-        $localidad = $order['shipping_address']['city'];
+        $departamento = str_replace(' ', '', strtoupper($order['shipping_address']['city']));
+        $localidad = str_replace(' ', '', strtoupper($order['shipping_address']['address2']));
         $cedula = $order['shipping_address']['company'];
         //numero
         $callenumero = array_filter(preg_split("/\D+/", $calle));
         $numerocasa = reset($callenumero);
         
         // pedido
-        $peso = $order['total_weight'];
+        $peso = $order['total_weight'] / 100;
         $referencia = 'Pedido ' . $order['order_number'];
         
         //Llamada a coreo uruguay

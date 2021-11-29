@@ -48,6 +48,12 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
+                                    <label for="phone" class="col-sm-4 col-form-label">Email</label>
+                                    <div class="col-sm-6">
+                                      <input type="text" class="form-control" id="email" name="email" value="{{ $order['email'] }}">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
                                     <label for="phone" class="col-sm-4 col-form-label">Update Phone</label>
                                     <div class="col-sm-6">
                                       <input type="text" class="form-control" id="phone" name="phone" value="{{ $order['phone'] }}">
@@ -81,13 +87,13 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="address1" class="col-sm-3 col-form-label">Departamento</label>
+                                    <label for="address1" class="col-sm-3 col-form-label">Barrio - Localidad</label>
                                     <div class="col-sm-8">
                                       <input type="text" class="form-control" id="address2" name="address2"  value="{{ $order['shipping_address']['address2'] }}">
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="city" class="col-sm-3 col-form-label">City</label>
+                                    <label for="city" class="col-sm-3 col-form-label">Departamento</label>
                                     <div class="col-sm-8">
                                       <input type="text" class="form-control" id="city" name="city"  value="{{ $order['shipping_address']['city'] }}">
                                     </div>
