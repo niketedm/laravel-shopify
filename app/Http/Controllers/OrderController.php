@@ -249,6 +249,14 @@ class OrderController extends Controller
         $customers = $shopify->Customer->get();
         $order = $shopify->Order($orderId)->get();
 
+        // quitar acentos
+        // $unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+        //                     'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+        //                     'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+        //                     'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+        //                     'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+        // $str = strtr( $str, $unwanted_array );
+
         // cliente
         $telefono = str_replace(' ', '', $order['shipping_address']['phone']);
         $telefono = substr($telefono, 0, 9);
@@ -266,7 +274,7 @@ class OrderController extends Controller
         $peso = $order['total_weight'] / 100;
         $referencia = 'Pedido ' . $order['order_number'];
         
-        //Llamada a coreo uruguay
+        //2- Enviar los datos a servicio soap de correo uruguay
         $wsdl = "http://ahivatest.correo.com.uy/web/CargaMasivaServicev4?wsdl";
         $client = new SoapClient($wsdl, array(  'soap_version' => SOAP_1_1,'trace' => true,)); 
         $namespace = 'http://schemas.xmlsoap.org/soap/envelope/'; 
@@ -318,6 +326,7 @@ class OrderController extends Controller
         //die(var_dump($params));
         $response = $client->__soapCall('cargaMasiva'  , array($params));
         
+        //3- retornar la respuesta y guardar el codigo de tracking
         $descripcionRespuesta = $response->return->descripcionRespuesta;
         $codigoRespuesta = $response->return->codigoRespuesta;
         $esError = $response->return->esError;
@@ -327,7 +336,7 @@ class OrderController extends Controller
             $tracking = $response->return->envios->codigostrazabilidad;
             $etiqueta = $response->return->envios->etiquetasGeneradas;
             echo $tracking;
-
+            //Descargar etiqueta generada
             $destination = '../storage/app/public/'.$tracking.'.pdf';
             $file = fopen($destination, "w+");
             fputs($file, $etiqueta);
@@ -339,6 +348,8 @@ class OrderController extends Controller
             header("Content-Type: application/pdf");
             header("Content-Transfer-Encoding: binary");
             readfile($destination);
+            
+            //4- generar fulfill de shopify y guardar el tracking en la orden
             //https://www.correo.com.uy/seguimientodeenvios
             // $shopify->Order($order->order_id)->Fulfillment->post([
             //     "location_id" => $shopify->Location->get()[0]['id'],
@@ -350,19 +361,7 @@ class OrderController extends Controller
         } else {
             echo $descripcionRespuesta;
         };
-        
-        
-
-
-
-
-
-
-
-
-       //2- Enviar los datos a servicio soap de correo uruguay
-       //3- retornar la respuesta y guardar el codigo de tracking
-       //4- generar fulfill de shopify y guardar el tracking en la orden
+       
     }
 
 
