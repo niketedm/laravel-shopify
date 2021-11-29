@@ -352,7 +352,7 @@ class OrderController extends Controller
             //4- generar fulfill de shopify y guardar el tracking en la orden
             //https://www.correo.com.uy/seguimientodeenvios
             try { 
-            $shopify->Order($order->order_id)->Fulfillment->put([
+            $shopify->Order($order->order_id)->Fulfillment->post([
                  "location_id" => $shopify->Location->get()[0]['id'],
                  "tracking_number" => $tracking,
                  "tracking_urls" => ['https://www.correo.com.uy/seguimientodeenvios'],
