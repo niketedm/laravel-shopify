@@ -258,13 +258,14 @@ class OrderController extends Controller
         // $str = strtr( $str, $unwanted_array );
 
         // cliente
-        $telefono = str_replace(' ', '', $order['shipping_address']['phone']);
+        $caracteresInvalidos = array(" ", "+");
+        $telefono = str_replace($caracteresInvalidos, '', $order['shipping_address']['phone']);
         $telefono = substr($telefono, 0, 9);
         $correo = $order['email'];
         $nombrecompleto = $order['shipping_address']['first_name'] . ' ' . $order['shipping_address']['last_name'];
         $calle = $order['shipping_address']['address1'];
-        $departamento = str_replace(' ', '', strtoupper($order['shipping_address']['city']));
-        $localidad = str_replace(' ', '', strtoupper($order['shipping_address']['address2']));
+        $departamento = strtoupper($order['shipping_address']['city']);
+        $localidad = strtoupper($order['shipping_address']['address2']);
         $cedula = $order['shipping_address']['company'];
         //numero
         $callenumero = array_filter(preg_split("/\D+/", $calle));
@@ -290,9 +291,10 @@ class OrderController extends Controller
                 'cedulaDestinatario' => $cedula, 
                 'datosdevolucion' => array(
                     'calle' => 'Jose Ignacio',
-                    'departamento' => 'La Juanita',
-                    'localidad' => 'Maldonado',
-                    'nroPuerta' => '582'
+                    'departamento' => 'MALDONADO',
+                    'localidad' => 'JOSE IGNACIO',
+                    'nroPuerta' => '582',
+                    'codigoPostal' => '20000'
                 ),
                 'destinatario' => array(
                     'celular' => $telefono,
@@ -361,22 +363,24 @@ class OrderController extends Controller
                 //print_r($lineItems);
                 $data = [
                     'location_id' => $shopify->Location->get()[0]['id'],
-                    "tracking_url" => 'https://ahiva.correo.com.uy/servicioConsultaTntIps-web/SeguimientoJSNuevo?codigoPieza=',
+                    "tracking_url" => 'https://ahiva.correo.com.uy/servicioConsultaTntIps-web/SeguimientoJSNuevo?codigoPieza=' . $tracking,
                     'tracking_number'=> $tracking,
                     "line_items" => $lineItems,
                     "notify_customer" =>true,
                 ];
-                echo '<pre>';
-                print_r($data);
+                //echo '<pre>';
+                //print_r($data);
                 $shopify->Order($orderId)->Fulfillment->post($data);
+                
+                return redirect()->route('orders')
+                            ->with('status','Envio creado con exito.');
         
             }catch (\Exception $e) {
 
                 return $e->getMessage();
             }
             
-            return redirect()->route('orders', [$request->get('id')])
-                            ->with('status','Envio creado con exito.');
+            
 
         } else {
             echo $descripcionRespuesta;
