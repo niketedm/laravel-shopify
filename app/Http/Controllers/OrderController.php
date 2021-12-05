@@ -332,10 +332,10 @@ class OrderController extends Controller
         $esError = $response->return->esError;
         
         if (empty($esError)) {
-            echo $descripcionRespuesta;
+            //echo $descripcionRespuesta;
             $tracking = $response->return->envios->codigostrazabilidad;
             $etiqueta = $response->return->envios->etiquetasGeneradas;
-            echo $tracking;
+            //echo $tracking;
             //Descargar etiqueta generada
             $destination = '../storage/app/public/'.$tracking.'.pdf';
             $file = fopen($destination, "w+");
@@ -352,18 +352,31 @@ class OrderController extends Controller
             //4- generar fulfill de shopify y guardar el tracking en la orden
             //https://www.correo.com.uy/seguimientodeenvios
             try { 
-            $shopify->Order($order->order_id)->Fulfillment->post([
-                 "location_id" => $shopify->Location->get()[0]['id'],
-                 "tracking_number" => $tracking,
-                 "tracking_urls" => ['https://www.correo.com.uy/seguimientodeenvios'],
-                 "notify_customer" => false
-             ]);
+                PHPShopify\ShopifySDK::config($this->config);
+                PHPShopify\AuthHelper::createAuthRequest($this->scopes, $this->redirectUrl, null, null, true);
+
+                $shopify = new PHPShopify\ShopifySDK($this->config);
+                $lineItems =  $order['line_items'];
+                //echo '<pre>';
+                //print_r($lineItems);
+                $data = [
+                    'location_id' => $shopify->Location->get()[0]['id'],
+                    "tracking_url" => 'https://www.correo.com.uy/seguimientodeenvios',
+                    'tracking_number'=> $tracking,
+                    "line_items" => $lineItems,
+                    "notify_customer" =>false,
+                ];
+                echo '<pre>';
+                print_r($data);
+                $shopify->Order($orderId)->Fulfillment->post($data);
+        
             }catch (\Exception $e) {
 
                 return $e->getMessage();
             }
             
-            return view('/orders');
+            return redirect()->route('orders', [$request->get('id')])
+                            ->with('status','Envio creado con exito.');
 
         } else {
             echo $descripcionRespuesta;
