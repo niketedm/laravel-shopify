@@ -361,7 +361,7 @@ class OrderController extends Controller
                 //print_r($lineItems);
                 $data = [
                     'location_id' => $shopify->Location->get()[0]['id'],
-                    "tracking_url" => 'https://www.correo.com.uy/seguimientodeenvios',
+                    "tracking_url" => 'https://ahiva.correo.com.uy/servicioConsultaTntIps-web/SeguimientoJSNuevo?codigoPieza=',
                     'tracking_number'=> $tracking,
                     "line_items" => $lineItems,
                     "notify_customer" =>true,
