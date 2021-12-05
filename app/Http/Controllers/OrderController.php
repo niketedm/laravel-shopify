@@ -364,7 +364,7 @@ class OrderController extends Controller
                     "tracking_url" => 'https://www.correo.com.uy/seguimientodeenvios',
                     'tracking_number'=> $tracking,
                     "line_items" => $lineItems,
-                    "notify_customer" =>false,
+                    "notify_customer" =>true,
                 ];
                 echo '<pre>';
                 print_r($data);
