@@ -45,7 +45,7 @@
                         <!-- Authentication Links -->
                         @guest
                             <li><a href="{{ route('login') }}">Ingresar</a></li>
-                            <li><a href="{{ route('register') }}">Registrar</a></li>
+                            
                         @else
                             <li><a href="{{ route('home') }}">Productos</a></li>
                             <li><a href="{{ route('customers') }}">Clientes</a></li>
