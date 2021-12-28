@@ -281,8 +281,10 @@ class OrderController extends Controller
         $namespace = 'http://schemas.xmlsoap.org/soap/envelope/'; 
 
         $params = array (
-            "arg0" => '216778010014',
-            "arg1" => 'q1w2e3r4',
+            "arg0" => 'Guadalupecid',
+            "arg1" => '3693',
+            "arg2" => '3693',
+            "arg3" => '0',
             "arg4" => array(
                     'clave' => 'autoadhesiva',
                     'valor' => 'si'
@@ -372,6 +374,7 @@ class OrderController extends Controller
                 //print_r($data);
                 $shopify->Order($orderId)->Fulfillment->post($data);
                 
+                header_remove();
                 return redirect()->route('orders')
                             ->with('status','Envio creado con exito.');
         
@@ -385,6 +388,45 @@ class OrderController extends Controller
         } else {
             echo $descripcionRespuesta;
         };
+       
+    }
+    public function imprimirEtiqueta(Request $request)
+    {
+        $orderId = $request->route('id');
+    
+        PHPShopify\ShopifySDK::config($this->config);
+        PHPShopify\AuthHelper::createAuthRequest($this->scopes, $this->redirectUrl, null, null, true);
+
+        $shopify = new PHPShopify\ShopifySDK($this->config);
+
+        $order = $shopify->Order($orderId)->get();
+        $filters = array(
+            'status' => 'complete', // open / closed / cancelled / any (Default: open)
+        );
+        $fulfill = $shopify->Order($orderId)->Fulfillment()->get($filters);
+        $ultimo = $fulfill[count($fulfill)-1];
+        $tracking = $ultimo['tracking_number'];
+        $filename = $tracking.'.pdf';
+        
+        $destination = '../storage/app/public/'.$tracking.'.pdf';
+        
+        header("Cache-Control: public");
+        header("Content-Description: File Transfer");
+        header("Content-Disposition: attachment; filename=$filename");
+        header("Content-Type: application/pdf");
+        header("Content-Transfer-Encoding: binary");
+        readfile($destination);
+        
+
+        die(var_dump($destination));
+        
+        if (! file_exists($destination)) {
+            echo 'error';
+        }
+        
+
+        
+        
        
     }
 
