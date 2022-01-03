@@ -43,8 +43,8 @@ class OrderController extends Controller
 
         $shopify = new PHPShopify\ShopifySDK($this->config);
         $filters = array(
-            //'status' => 'any', // open / closed / cancelled / any (Default: open)
-            'limit' => '50'
+            'status' => 'any', // open / closed / cancelled / any (Default: open)
+            'limit' => '140'
         );
         $orders = $shopify->Order->get($filters);
 
