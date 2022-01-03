@@ -276,7 +276,7 @@ class OrderController extends Controller
         $referencia = 'Pedido ' . $order['order_number'];
         
         //2- Enviar los datos a servicio soap de correo uruguay
-        $wsdl = "http://ahivatest.correo.com.uy/web/CargaMasivaServicev4?wsdl";
+        $wsdl = "https://ahiva.correo.com.uy/web/CargaMasivaServicev4?wsdl";
         $client = new SoapClient($wsdl, array(  'soap_version' => SOAP_1_1,'trace' => true,)); 
         $namespace = 'http://schemas.xmlsoap.org/soap/envelope/'; 
 
