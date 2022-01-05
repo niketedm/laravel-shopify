@@ -320,7 +320,7 @@ class OrderController extends Controller
                     'motivodevolucion' => '',
                     'peso' => $peso,
                     'referencia' => $referencia,
-                    'responsableServEntrega' => 'DESTINATARIO'
+                    'responsableServEntrega' => 'REMITENTE'
                 ),
                 'soloDestinatario' => '0'
             ),
