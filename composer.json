@@ -6,6 +6,7 @@
     "type": "project",
     "require": {
         "php": ">=7.0.0",
+        "alejoasotelo/andreani": "^0.8.1",
         "artisaninweb/laravel-soap": "0.3.0.10",
         "fideloper/proxy": "~3.3",
         "laravel/framework": "5.5.*",
@@ -54,6 +55,10 @@
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "kylekatarnls/update-helper": true,
+            "symfony/thanks": true
+        }
     }
 }
