@@ -430,17 +430,25 @@ class OrderController extends Controller
 
         //file_put_contents(__DIR__.'/procesoDeEnvio-4-getTrazatabilidad.json', json_encode($trazabilidad));
 
-        ### 5. Obtener la etiqueta. ###
+        ### 5. Obtener la etiqueta y descargar en browser. ###
         $etiqueta = $ws->getEtiqueta($numeroDeEnvio);
 
-        if (!is_null($etiqueta) && isset($etiqueta->pdf)) {
+        if (!is_null($etiqueta) && isset($etiqueta->pdf)) { 
+            
             file_put_contents('../storage/app/public/'.$numeroDeEnvio.'.pdf', $etiqueta->pdf);
+            $destination = '../storage/app/public/'.$numeroDeEnvio.'.pdf';
+            $filename = $numeroDeEnvio.'.pdf';
+            header("Cache-Control: public");
+            header("Content-Description: File Transfer");
+            header("Content-Disposition: attachment; filename=$filename");
+            header("Content-Type: application/pdf");
+            header("Content-Transfer-Encoding: binary");
+            readfile($destination);
             die('¡Proceso completado OK!');
         }
 
         die('5. (!) No se pudo obtener la Etiqueta');
         
-        die();
       
         //3- retornar la respuesta y descargar etiqueta de envio
         $descripcionRespuesta = $response->return->descripcionRespuesta;
