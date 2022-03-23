@@ -276,62 +276,173 @@ class OrderController extends Controller
         $peso = $order['total_weight'] / 100;
         $referencia = 'Pedido ' . $order['order_number'];
         
-        //2- Enviar los datos a servicio soap de correo uruguay
-        $wsdl = "https://ahiva.correo.com.uy/web/CargaMasivaServicev4?wsdl";
-        $client = new SoapClient($wsdl, array(  'soap_version' => SOAP_1_1,'trace' => true,)); 
-        $namespace = 'http://schemas.xmlsoap.org/soap/envelope/'; 
+        //2- Webservice andreani
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
 
-        $params = array (
-            "arg0" => 'Guadalupecid',
-            "arg1" => '3693',
-            "arg2" => '3693',
-            "arg3" => '0',
-            "arg4" => array(
-                    'clave' => 'autoadhesiva',
-                    'valor' => 'si'
-            ),
-            "arg5" => array(
-                'cedulaDestinatario' => $cedula, 
-                'datosdevolucion' => array(
-                    'calle' => 'Jose Ignacio',
-                    'departamento' => 'MALDONADO',
-                    'localidad' => 'JOSE IGNACIO',
-                    'nroPuerta' => '582',
-                    'codigoPostal' => '20000'
-                ),
-                'destinatario' => array(
-                    'celular' => $telefono,
-                    'mail' => $correo,
-                    'nombre' => $nombrecompleto
-                ),
-                'lugarEntrega' => array(
-                    'calle' => $calle,
-                    'departamento' => $departamento,
-                    'localidad' => $localidad,
-                    'manzana' => '',
-                    'nroApto' => '',
-                    'nroPuerta' => $numerocasa,
-                    'observacionesDireccion' => '',
-                    'oficinaCorreo' => '',
-                    'solar' => ''
-                ),
-                'paquetesSimples' => array(
-                    'almacenamiento' => '10',
-                    'empaque' => '0',
-                    'motivodevolucion' => '',
-                    'peso' => $peso,
-                    'referencia' => $referencia,
-                    'responsableServEntrega' => 'REMITENTE'
-                ),
-                'soloDestinatario' => '0'
-            ),
+        $user = env('ANDREANI_USER');
+        $pass = env('ANDREANI_PASS');
+        $cliente = env('ANDREANI_CLIENTE');
+        $debug = env('ANDREANI_DEBUG');
 
-        );
-        //echo '<pre>';
-        //die(var_dump($params));
-        $response = $client->__soapCall('cargaMasiva'  , array($params));
+        $ws = new Andreani($user, $pass, $cliente, $debug);
         
-        //3- retornar la respuesta y guardar el codigo de tracking
+        $contrato = '400006709';
+
+        // Datos de ejemplo obtenidos de https://developers.andreani.com/documentacion/2#crearOrden
+        $data = [
+            'contrato' => '400006711',
+            'origen' => [
+                'postal' => [
+                    'codigoPostal' => '3378',
+                    'calle' => 'Av Falsa',
+                    'numero' => '380',
+                    'localidad' => 'Puerto Esperanza',
+                    'region' => '',
+                    'pais' => 'Argentina',
+                    'componentesDeDireccion' => [
+                        [
+                            'meta' => 'entreCalle',
+                            'contenido' => 'Medina y Jualberto',
+                        ],
+                    ],
+                ],
+            ],
+            'destino' => [
+            'postal' => [
+                'codigoPostal' => '1292',
+                'calle' => 'Macacha Guemes',
+                'numero' => '28',
+                'localidad' => 'C.A.B.A.',
+                'region' => 'AR-B',
+                'pais' => 'Argentina',
+                'componentesDeDireccion' => [
+                [
+                    'meta' => 'piso',
+                    'contenido' => '2',
+                ],
+                [
+                    'meta' => 'departamento',
+                    'contenido' => 'B',
+                ],
+                ],
+            ],
+            ],
+            'remitente' => [
+            'nombreCompleto' => 'Alberto Lopez',
+            'email' => 'remitente@andreani.com',
+            'documentoTipo' => 'DNI',
+            'documentoNumero' => '33111222',
+            'telefonos' => [
+                [
+                'tipo' => 1,
+                'numero' => '113332244',
+                ],
+            ],
+            ],
+            'destinatario' => [
+                [
+                    'nombreCompleto' => 'Juana Gonzalez',
+                    'email' => 'destinatario@andreani.com',
+                    'documentoTipo' => 'DNI',
+                    'documentoNumero' => '33999888',
+                    'telefonos' => [
+                        [
+                            'tipo' => 1,
+                            'numero' => '1112345678',
+                        ],
+                    ],
+                ],
+            ],
+            'productoAEntregar' => 'Aire Acondicionado',
+            'bultos' => [
+                [
+                    'kilos' => 2,
+                    'largoCm' => 10,
+                    'altoCm' => 50,
+                    'anchoCm' => 10,
+                    'volumenCm' => 5000,
+                    'valorDeclaradoSinImpuestos' => 1200,
+                    'valorDeclaradoConImpuestos' => 1452,
+                    'referencias' => [
+                        [
+                            'meta' => 'detalle',
+                            'contenido' => 'Secador de pelo',
+                        ],
+                        [
+                            'meta' => 'idCliente',
+                            'contenido' => '10000',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        ### 1. Cotizar el envío ###
+        // $codigoPostal = $data['destino']['postal']['codigoPostal'];
+
+        // $cotizacion = $ws->cotizarEnvio($codigoPostal, $contrato, $data['bultos']);
+
+        // if (is_null($cotizacion)) {
+        //     die('1. (!) No se pudo obtener la Cotización.');
+        // }
+
+        //file_put_contents(__DIR__.'/procesoDeEnvio-1-cotizarEnvio.json', json_encode($cotizacion));
+
+
+        ### 2. Crear la Orden ###
+        $orden = $ws->addOrden($data);
+
+        if (is_null($orden)) {
+            die('2. (!) No se pudo crear la Orden.');
+        }
+
+        file_put_contents(__DIR__.'/procesoDeEnvio-2-addOrden.json', json_encode($orden));
+
+        // Como este envío es 1 solo bulto obtengo el primer item del array bultos
+        $numeroDeEnvio = $orden->bultos[0]->numeroDeEnvio;
+        
+
+        ### 3. Obtener la orden ###
+        // $orden = $ws->getOrden($numeroDeEnvio);
+
+        // if (is_null($orden)) {
+        //     die('3. (!) No se pudo obtener la Orden.');
+        // }
+
+        // file_put_contents(__DIR__.'/procesoDeEnvio-3-getOrden.json', json_encode($orden));
+
+        ### 4. Obtener la trazabilidad ###
+        //$numeroDeEnvio = $orden->bultos[0]->numeroDeEnvio;
+        //$trazabilidad = $ws->getTrazabilidad($numeroDeEnvio);
+
+        // cuando se genera una nueva orden la trazabilidad responde con código 404.
+        // if (is_null($trazabilidad)) {
+        //     $response = $ws->getResponse();
+
+        //     if ($response->code == 404) {
+        //         $trazabilidad = json_decode($response->body);
+        //     } else {
+        //         die('4. (!) No se pudo Obtener la Trazabilidad.');
+        //     }
+        // }
+
+        //file_put_contents(__DIR__.'/procesoDeEnvio-4-getTrazatabilidad.json', json_encode($trazabilidad));
+
+        ### 5. Obtener la etiqueta. ###
+        $etiqueta = $ws->getEtiqueta($numeroDeEnvio);
+
+        if (!is_null($etiqueta) && isset($etiqueta->pdf)) {
+            file_put_contents('../storage/app/public/'.$numeroDeEnvio.'.pdf', $etiqueta->pdf);
+            die('¡Proceso completado OK!');
+        }
+
+        die('5. (!) No se pudo obtener la Etiqueta');
+        
+        die();
+      
+        //3- retornar la respuesta y descargar etiqueta de envio
         $descripcionRespuesta = $response->return->descripcionRespuesta;
         $codigoRespuesta = $response->return->codigoRespuesta;
         $esError = $response->return->esError;
