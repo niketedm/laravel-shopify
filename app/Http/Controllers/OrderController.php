@@ -7,7 +7,7 @@ use Artisaninweb\SoapWrapper\SoapWrapper;
 use PHPShopify;
 use App\Post;
 use SoapClient;
-use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use AlejoASotelo\Andreani;
 
 
@@ -37,7 +37,7 @@ class OrderController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {        
         PHPShopify\ShopifySDK::config($this->config);
         PHPShopify\AuthHelper::createAuthRequest($this->scopes, $this->redirectUrl, null, null, true);
@@ -45,16 +45,32 @@ class OrderController extends Controller
         $shopify = new PHPShopify\ShopifySDK($this->config);
         $filters = array(
             'status' => 'any', // open / closed / cancelled / any (Default: open)
-            'limit' => '140'
+            'limit' => '200'
         );
         $orders = $shopify->Order->get($filters);
+        $paginator = $this->getPaginator($request, $orders);
+
 
         //echo '<pre>';
         //var_dump($orders);
         //echo '</pre>';
 
-        return view('order.index', array('orders'=>$orders) );
+        return view('order.index')->with('orders', $paginator);
     }
+    private function getPaginator(Request $request, $orders)
+        {
+            $total = count($orders); // total count of the set, this is necessary so the paginator will know the total pages to display
+            $page = $request->page ?? 1; // get current page from the request, first page is null
+            $perPage = 10; // how many items you want to display per page?
+            $offset = ($page - 1) * $perPage; // get the offset, how many items need to be "skipped" on this page
+            $orders = array_slice($orders, $offset, $perPage); // the array that we actually pass to the paginator is sliced
+
+            return new LengthAwarePaginator($orders, $total, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query()
+            ]);
+        }
+
     
     public function fulfilled()
     {        

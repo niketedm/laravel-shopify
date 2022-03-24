@@ -50,6 +50,7 @@
                       
                       </tbody>
                     </table>
+                    {{ $orders->links() }}
                 </div>
             </div>
         </div>
