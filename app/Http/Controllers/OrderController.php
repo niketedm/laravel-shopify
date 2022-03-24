@@ -297,9 +297,9 @@ class OrderController extends Controller
         
         // pedido
         $peso = $order['total_weight'] / 1000;
-        $valortotal = $order['subtotal_price']; // valor mercaderia
+        $valortotal = round($order['subtotal_price']); // valor mercaderia
         $iva = $order['subtotal_price']* 21 / 100; // valor mercaderia sin iva 21%
-        $valortotalexcliva = $valortotal - $iva;
+        $valortotalexcliva = round($valortotal - $iva);
         $referencia = 'Pedido ' . $order['order_number'];
         
         //2- Webservice andreani
@@ -339,7 +339,7 @@ class OrderController extends Controller
                 'postal' => [
                     'codigoPostal' => $cp,
                     'calle' => $calle,
-                    'numero' => '408',
+                    'numero' => '444',
                     'localidad' => $ciudad,
                     'region' => $provincia,
                     'pais' => 'Argentina',
@@ -397,8 +397,8 @@ class OrderController extends Controller
                             'contenido' => $referencia,
                         ],
                         [
-                            //'meta' => 'idCliente',
-                            //'contenido' => '10000',
+                            'meta' => 'idCliente',
+                            'contenido' => '10000',
                         ],
                     ],
                 ],
