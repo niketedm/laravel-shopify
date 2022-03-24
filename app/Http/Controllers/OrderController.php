@@ -55,6 +55,7 @@ class OrderController extends Controller
 
         return view('order.index', array('orders'=>$orders) );
     }
+    
     public function fulfilled()
     {        
         PHPShopify\ShopifySDK::config($this->config);
@@ -292,21 +293,21 @@ class OrderController extends Controller
 
         // Datos de ejemplo obtenidos de https://developers.andreani.com/documentacion/2#crearOrden
         $data = [
-            'contrato' => '400006711',
+            'contrato' => env('ANDREANI_CONTRATO'),
             'origen' => [
                 'postal' => [
-                    'codigoPostal' => '3378',
-                    'calle' => 'Av Falsa',
-                    'numero' => '380',
-                    'localidad' => 'Puerto Esperanza',
-                    'region' => '',
+                    'codigoPostal' => env('ANDREANI_ORIGEN_CP'),
+                    'calle' => env('ANDREANI_ORIGEN_CALLE'),
+                    'numero' => env('ANDREANI_ORIGEN_NUMERO'),
+                    'localidad' => env('ANDREANI_ORIGEN_LOCALIDAD'),
+                    'region' => env('ANDREANI_ORIGEN_REGION'),
                     'pais' => 'Argentina',
-                    'componentesDeDireccion' => [
-                        [
-                            'meta' => 'entreCalle',
-                            'contenido' => 'Medina y Jualberto',
-                        ],
-                    ],
+                    //'componentesDeDireccion' => [
+                      //  [
+                        //    'meta' => 'entreCalle',
+                          //  'contenido' => env('ANDREANI_ORIGEN_ENTRE'),
+                        //],
+                    //],
                 ],
             ],
             'destino' => [
@@ -330,14 +331,14 @@ class OrderController extends Controller
             ],
             ],
             'remitente' => [
-            'nombreCompleto' => 'Alberto Lopez',
-            'email' => 'remitente@andreani.com',
-            'documentoTipo' => 'DNI',
-            'documentoNumero' => '33111222',
+            'nombreCompleto' => env('ANDREANI_REMITENTE_NOMBRE'),
+            'email' => env('ANDREANI_REMITENTE_EMAIL'),
+            'documentoTipo' => env('ANDREANI_REMITENTE_DOCTYPE'),
+            'documentoNumero' => env('ANDREANI_REMITENTE_DOCNUM'),
             'telefonos' => [
                 [
                 'tipo' => 1,
-                'numero' => '113332244',
+                'numero' => env('ANDREANI_REMITENTE_TELEFONO'),
                 ],
             ],
             ],
@@ -395,10 +396,11 @@ class OrderController extends Controller
         $orden = $ws->addOrden($data);
 
         if (is_null($orden)) {
-            die('2. (!) No se pudo crear la Orden.');
+            die('2. (!) No se pudo crear el envio andreani.');
         }
-
-        file_put_contents(__DIR__.'/procesoDeEnvio-2-addOrden.json', json_encode($orden));
+        $date = new DateTime();
+        $date = $date->format("y:m:d h:i:s");
+        file_put_contents('../storage/app/public/'.$date.'procesoDeEnvio-2-addOrden.json', json_encode($orden));
 
         // Como este envío es 1 solo bulto obtengo el primer item del array bultos
         $numeroDeEnvio = $orden->bultos[0]->numeroDeEnvio;
@@ -450,28 +452,7 @@ class OrderController extends Controller
         die('5. (!) No se pudo obtener la Etiqueta');
         
       
-        //3- retornar la respuesta y descargar etiqueta de envio
-        $descripcionRespuesta = $response->return->descripcionRespuesta;
-        $codigoRespuesta = $response->return->codigoRespuesta;
-        $esError = $response->return->esError;
-        
-        if (empty($esError)) {
-            //echo $descripcionRespuesta;
-            $tracking = $response->return->envios->codigostrazabilidad;
-            $etiqueta = $response->return->envios->etiquetasGeneradas;
-            //echo $tracking;
-            //Descargar etiqueta generada
-            $destination = '../storage/app/public/'.$tracking.'.pdf';
-            $file = fopen($destination, "w+");
-            fputs($file, $etiqueta);
-            fclose($file);
-            $filename = $tracking.'.pdf';
-            header("Cache-Control: public");
-            header("Content-Description: File Transfer");
-            header("Content-Disposition: attachment; filename=$filename");
-            header("Content-Type: application/pdf");
-            header("Content-Transfer-Encoding: binary");
-            readfile($destination);
+       
             
             //4- generar fulfill de shopify y guardar el tracking en la orden
             //https://www.correo.com.uy/seguimientodeenvios
@@ -485,8 +466,8 @@ class OrderController extends Controller
                 //print_r($lineItems);
                 $data = [
                     'location_id' => $shopify->Location->get()[0]['id'],
-                    "tracking_url" => 'https://ahiva.correo.com.uy/servicioConsultaTntIps-web/SeguimientoJSNuevo?codigoPieza=' . $tracking,
-                    'tracking_number'=> $tracking,
+                    "tracking_url" => 'https://www.andreani.com/#!/informacionEnvio/' . $numeroDeEnvio,
+                    'tracking_number'=> $numeroDeEnvio,
                     "line_items" => $lineItems,
                     "notify_customer" =>true,
                 ];
@@ -502,12 +483,6 @@ class OrderController extends Controller
 
                 return $e->getMessage();
             }
-            
-            
-
-        } else {
-            echo $descripcionRespuesta;
-        };
        
     }
     public function imprimirEtiqueta(Request $request)
