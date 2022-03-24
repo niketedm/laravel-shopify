@@ -422,9 +422,9 @@ class OrderController extends Controller
         file_put_contents(__DIR__.'/procesoDeEnvio-2-addOrden.json', json_encode($orden));
 
         if (is_null($orden)) {
-            echo '<pre>';
-            print_r($data);
-            echo '</pre>';
+            // echo '<pre>';
+            // print_r($data);
+            // echo '</pre>';
             die('2. (!) No se pudo crear el envio andreani.');
         }
         $date = new DateTime();
@@ -474,14 +474,7 @@ class OrderController extends Controller
             header("Content-Type: application/pdf");
             header("Content-Transfer-Encoding: binary");
             readfile($destination);
-            die('¡Proceso completado OK!');
-        }
-
-        die('5. (!) No se pudo obtener la Etiqueta');
-        
-      
-       
-            
+            //die('¡Proceso completado OK!');
             //4- generar fulfill de shopify y guardar el tracking en la orden
             //https://www.correo.com.uy/seguimientodeenvios
             try { 
@@ -493,9 +486,10 @@ class OrderController extends Controller
                 //echo '<pre>';
                 //print_r($lineItems);
                 $data = [
-                    'location_id' => $shopify->Location->get()[0]['id'],
+                    "location_id" => $shopify->Location->get()[0]['id'],
                     "tracking_url" => 'https://www.andreani.com/#!/informacionEnvio/' . $numeroDeEnvio,
-                    'tracking_number'=> $numeroDeEnvio,
+                    "tracking_number"=> $numeroDeEnvio,
+                    "tracking_company" => "Andreani",
                     "line_items" => $lineItems,
                     "notify_customer" =>true,
                 ];
@@ -511,6 +505,10 @@ class OrderController extends Controller
 
                 return $e->getMessage();
             }
+        }
+
+        die('5. (!) No se pudo obtener la Etiqueta');
+            
        
     }
     public function imprimirEtiqueta(Request $request)
