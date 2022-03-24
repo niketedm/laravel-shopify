@@ -9,6 +9,8 @@ use App\Post;
 use SoapClient;
 use Illuminate\Pagination\LengthAwarePaginator;
 use AlejoASotelo\Andreani;
+use DateTime;
+
 
 
 class OrderController extends Controller
@@ -79,8 +81,8 @@ class OrderController extends Controller
 
         $shopify = new PHPShopify\ShopifySDK($this->config);
         $filters = array(
-            'status' => 'any', // open / closed / cancelled / any (Default: open)
-            'limit' => '100'
+            'fulfillment_status' => 'shipped', // open / closed / cancelled / any (Default: open)
+            'limit' => '250'
         );
         $orders = $shopify->Order->get($filters);
 
@@ -278,19 +280,26 @@ class OrderController extends Controller
         // cliente
         $caracteresInvalidos = array(" ", "+");
         $telefono = str_replace($caracteresInvalidos, '', $order['shipping_address']['phone']);
-        $telefono = substr($telefono, 0, 9);
+        //$telefono = substr($telefono, 0, 9);
         $correo = $order['email'];
         $nombrecompleto = $order['shipping_address']['first_name'] . ' ' . $order['shipping_address']['last_name'];
         $calle = $order['shipping_address']['address1'];
-        $departamento = strtoupper($order['shipping_address']['city']);
-        $localidad = strtoupper($order['shipping_address']['address2']);
-        $cedula = $order['shipping_address']['company'];
+        $calle2 = strtoupper($order['shipping_address']['address2']);
+        $ciudad = strtoupper($order['shipping_address']['city']);
+        $provincia = strtoupper($order['shipping_address']['province_code']);
+        $provincia = 'AR-' . $provincia;
+        $dni = $order['shipping_address']['company'];
+        $cp = $order['shipping_address']['zip'];
+        $cp = preg_replace("/[^0-9]/", "", $cp );
         //numero
         $callenumero = array_filter(preg_split("/\D+/", $calle));
         $numerocasa = reset($callenumero);
         
         // pedido
-        $peso = $order['total_weight'] / 100;
+        $peso = $order['total_weight'] / 1000;
+        $valortotal = $order['subtotal_price']; // valor mercaderia
+        $iva = $order['subtotal_price']* 21 / 100; // valor mercaderia sin iva 21%
+        $valortotalexcliva = $valortotal - $iva;
         $referencia = 'Pedido ' . $order['order_number'];
         
         //2- Webservice andreani
@@ -318,33 +327,33 @@ class OrderController extends Controller
                     'localidad' => env('ANDREANI_ORIGEN_LOCALIDAD'),
                     'region' => env('ANDREANI_ORIGEN_REGION'),
                     'pais' => 'Argentina',
-                    //'componentesDeDireccion' => [
-                      //  [
-                        //    'meta' => 'entreCalle',
-                          //  'contenido' => env('ANDREANI_ORIGEN_ENTRE'),
-                        //],
-                    //],
+                    'componentesDeDireccion' => [
+                        [
+                            'meta' => 'entreCalle',
+                            'contenido' => env('ANDREANI_ORIGEN_ENTRE'),
+                        ],
+                    ],
                 ],
             ],
             'destino' => [
-            'postal' => [
-                'codigoPostal' => '1292',
-                'calle' => 'Macacha Guemes',
-                'numero' => '28',
-                'localidad' => 'C.A.B.A.',
-                'region' => 'AR-B',
-                'pais' => 'Argentina',
-                'componentesDeDireccion' => [
-                [
-                    'meta' => 'piso',
-                    'contenido' => '2',
+                'postal' => [
+                    'codigoPostal' => $cp,
+                    'calle' => $calle,
+                    'numero' => '408',
+                    'localidad' => $ciudad,
+                    'region' => $provincia,
+                    'pais' => 'Argentina',
+                    'componentesDeDireccion' => [
+                    [
+                        'meta' => 'piso',
+                        'contenido' => $calle2,
+                    ],
+                    [
+                        'meta' => 'departamento',
+                        'contenido' => $calle2,
+                    ],
+                    ],
                 ],
-                [
-                    'meta' => 'departamento',
-                    'contenido' => 'B',
-                ],
-                ],
-            ],
             ],
             'remitente' => [
             'nombreCompleto' => env('ANDREANI_REMITENTE_NOMBRE'),
@@ -360,36 +369,36 @@ class OrderController extends Controller
             ],
             'destinatario' => [
                 [
-                    'nombreCompleto' => 'Juana Gonzalez',
-                    'email' => 'destinatario@andreani.com',
+                    'nombreCompleto' => $nombrecompleto,
+                    'email' => $correo,
                     'documentoTipo' => 'DNI',
-                    'documentoNumero' => '33999888',
+                    'documentoNumero' => $dni,
                     'telefonos' => [
                         [
                             'tipo' => 1,
-                            'numero' => '1112345678',
+                            'numero' => $telefono,
                         ],
                     ],
                 ],
             ],
-            'productoAEntregar' => 'Aire Acondicionado',
+            'productoAEntregar' => 'Bikini Guadalupe Cid',
             'bultos' => [
                 [
-                    'kilos' => 2,
+                    'kilos' => $peso,
                     'largoCm' => 10,
                     'altoCm' => 50,
                     'anchoCm' => 10,
                     'volumenCm' => 5000,
-                    'valorDeclaradoSinImpuestos' => 1200,
-                    'valorDeclaradoConImpuestos' => 1452,
+                    'valorDeclaradoSinImpuestos' => $valortotalexcliva,
+                    'valorDeclaradoConImpuestos' => $valortotal,
                     'referencias' => [
                         [
                             'meta' => 'detalle',
-                            'contenido' => 'Secador de pelo',
+                            'contenido' => $referencia,
                         ],
                         [
-                            'meta' => 'idCliente',
-                            'contenido' => '10000',
+                            //'meta' => 'idCliente',
+                            //'contenido' => '10000',
                         ],
                     ],
                 ],
@@ -410,13 +419,16 @@ class OrderController extends Controller
 
         ### 2. Crear la Orden ###
         $orden = $ws->addOrden($data);
+        file_put_contents(__DIR__.'/procesoDeEnvio-2-addOrden.json', json_encode($orden));
 
         if (is_null($orden)) {
+            echo '<pre>';
+            print_r($data);
+            echo '</pre>';
             die('2. (!) No se pudo crear el envio andreani.');
         }
         $date = new DateTime();
         $date = $date->format("y:m:d h:i:s");
-        file_put_contents('../storage/app/public/'.$date.'procesoDeEnvio-2-addOrden.json', json_encode($orden));
 
         // Como este envío es 1 solo bulto obtengo el primer item del array bultos
         $numeroDeEnvio = $orden->bultos[0]->numeroDeEnvio;
