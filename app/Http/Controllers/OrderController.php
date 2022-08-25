@@ -314,7 +314,7 @@ class OrderController extends Controller
 
         $ws = new Andreani($user, $pass, $cliente, $debug);
         
-        $contrato = '400006709';
+        $contrato = '400004880';
 
         // Datos de ejemplo obtenidos de https://developers.andreani.com/documentacion/2#crearOrden
         $data = [
@@ -418,19 +418,22 @@ class OrderController extends Controller
 
 
         ### 2. Crear la Orden ###
-        $orden = $ws->addOrden($data);
+        
+        $orden = $ws->addOrden($data, Andreani::API_V2);
         file_put_contents(__DIR__.'/procesoDeEnvio-2-addOrden.json', json_encode($orden));
-
         if (is_null($orden)) {
-            // echo '<pre>';
-            // print_r($data);
-            // echo '</pre>';
-            die('2. (!) No se pudo crear el envio andreani.');
-        }
+            echo 'Andreani no genero el envio, contacte al soporte tecnico de Andreani';
+        } 
+        
+
+        
+            
+        
         $date = new DateTime();
         $date = $date->format("y:m:d h:i:s");
 
         // Como este envío es 1 solo bulto obtengo el primer item del array bultos
+        
         $numeroDeEnvio = $orden->bultos[0]->numeroDeEnvio;
         
 
@@ -461,8 +464,11 @@ class OrderController extends Controller
         //file_put_contents(__DIR__.'/procesoDeEnvio-4-getTrazatabilidad.json', json_encode($trazabilidad));
 
         ### 5. Obtener la etiqueta y descargar en browser. ###
+        
         $etiqueta = $ws->getEtiqueta($numeroDeEnvio);
-
+        if (is_null($etiqueta)) {
+            echo 'Error de tiempo de espera por etiqueta de Andreani, contacte a su agente de cuentas';
+        } 
         if (!is_null($etiqueta) && isset($etiqueta->pdf)) { 
             
             file_put_contents('../storage/app/public/'.$numeroDeEnvio.'.pdf', $etiqueta->pdf);
@@ -507,7 +513,6 @@ class OrderController extends Controller
             }
         }
 
-        die('5. (!) No se pudo obtener la Etiqueta');
             
        
     }
@@ -539,7 +544,7 @@ class OrderController extends Controller
         readfile($destination);
         
 
-        die(var_dump($destination));
+        //die(var_dump($destination));
         
         if (! file_exists($destination)) {
             echo 'error';

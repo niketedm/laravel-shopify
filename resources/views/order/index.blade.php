@@ -31,10 +31,12 @@
                       <tbody>
                         
                          @foreach ($orders as $order)
+                         
+                          
                         <tr>
                           <th scope="row">{{ $order['name'] }}</th>
                           <td>{{ date("l, F t, Y", strtotime($order['created_at'])) }}</td>
-                          <td>{{ ucfirst($order['customer']['first_name']) }} {{ ucfirst($order['customer']['last_name']) }}</td>
+                          <td>{{ $order['customer']['first_name'] or '' }} {{ $order['customer']['last_name'] or '' }}</td>
                           <td>{{ $order['financial_status'] }}</td>
                           <td>{{ $order['fulfillment_status'] == '' ? 'Unfulfilled' : $order['financial_status'] }}</td>
                           <td>${{ $order['total_price'] }}</td>
